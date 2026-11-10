@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1c1c1e">
+<title>Комплимент для мужика</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #1c1c1e; color: #f2f2f2;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: space-between; min-height: 100%;
+    padding: 24px; text-align: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  header { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: #8e8e93; }
+  main { display: flex; flex-direction: column; align-items: center; gap: 28px; max-width: 480px; width: 100%; }
+  #compliment {
+    font-size: clamp(20px, 5.5vw, 30px); line-height: 1.4; font-weight: 600;
+    min-height: 150px; display: flex; align-items: center; justify-content: center;
+    opacity: 0; transform: translateY(10px) scale(.96);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  #compliment.show { opacity: 1; transform: none; }
+  #bigButton {
+    width: min(70vw, 240px); height: min(70vw, 240px); border-radius: 50%;
+    border: none; background: radial-gradient(circle at 35% 30%, #ffb340, #ff9500 60%, #e07c00);
+    color: #1c1c1e; font-size: 26px; font-weight: 800; cursor: pointer;
+    box-shadow: 0 10px 40px rgba(255,149,0,.35), inset 0 -6px 14px rgba(0,0,0,.25);
+    transition: transform .1s ease; touch-action: manipulation;
+  }
+  #bigButton:active { transform: scale(.93); }
+  #share {
+    display: none; background: none; border: 1px solid #48484a; color: #ffb340;
+    padding: 12px 28px; border-radius: 30px; font-size: 16px; cursor: pointer;
+  }
+  #share:active { background: rgba(255,179,64,.1); }
+  footer { font-size: 14px; color: #8e8e93; }
+  .confetti {
+    position: fixed; width: 8px; height: 14px; border-radius: 2px;
+    pointer-events: none; z-index: 10;
+    animation: fall .9s ease-in forwards;
+  }
+  @keyframes fall {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(60vh) rotate(540deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <header>Комплимент для мужика</header>
+  <main>
+    <div id="compliment">Жми. Слышать правду о себе — тоже мужество.</div>
+    <button id="bigButton">ДАЙ ПЯТЬ 🖐</button>
+    <button id="share">Отправить другу</button>
+  </main>
+  <footer id="counter"></footer>
+
+<script>
+const compliments = [
+  // Дело и руки
+  "Ты собираешь мебель так, что она переживает три переезда.",
+  "Если бы у хомяков были руководители, они бы выбрали тебя.",
+  "Ты держишь слово. Даже когда никто не проверяет.",
+  "После твоих рук техника работает лучше, чем из коробки.",
+  "Ты решаешь проблемы до того, как они успевают стать драмой.",
+  "Твоя кнопка «сделаю сам» срабатывает чаще, чем «позови мастера».",
+  // Характер
+  "Ты из тех людей, на которых реально можно опереться.",
+  "С тобой спокойно. Это редкий и дорогой навык.",
+  "Ты не суетишься — и этим разбираешь хаос вокруг.",
+  "Твоя выдержка достойна отдельной медали.",
+  "Ты умеешь признать ошибку. Это сила, а не слабость.",
+  "Твоё «щас разберёмся» действительно значит «щас разберёмся».",
+  "Ты доводишь дела до конца. Так же, как фильмы до титров.",
+  "Ты редко хвалишь себя зря. Так вот, сейчас — не зря.",
+  // Эстетика
+  "Тебе идёт это слегка уставшее выражение лица.",
+  "У тебя руки, которые сразу внушают доверие.",
+  "Ты выглядишь как человек, у которого всё под контролем. Даже когда это не совсем так.",
+  "Твой задумчивый взгляд из окна — как кадр из хорошего кино.",
+  "Ты пахнешь надёжностью. Это неподделываемый аромат.",
+  "Если бы у дресс-кода было мнение, он бы тебя одобрил.",
+  "Твои кроссовки сочетаются с характером: надёжно и без понтов.",
+  // Ирония
+  "Ты не просто молодец. Ты трижды молодец.",
+  "Если бы спокойствие продавалось, ты был бы его официальным поставщиком.",
+  "Твой голос звучит так, будто всё наладится. И правда наладится.",
+  "Ты жмёшь руку так, что вторая рука не нужна.",
+  "Ты прав. Не всегда, но сегодня — точно.",
+  "Рядом с тобой любая история звучит смешнее.",
+  "Ты умеешь молчать так, что это мудрее чужих речей.",
+  "Твоя выдержка в пробке достойна дзен-мастера.",
+  "Ты делаешь сложное без пафоса. Это высший пилотаж.",
+  "Ты умеешь выбрать и правильное мясо, и правильные слова."
+];
+
+const el = document.getElementById("compliment");
+const btn = document.getElementById("bigButton");
+const shareBtn = document.getElementById("share");
+const counterEl = document.getElementById("counter");
+let last = -1, total = +(localStorage.getItem("compiment_total") || 0);
+
+function updateCounter() {
+  counterEl.textContent = total ? "Получено комплиментов: " + total : "";
+}
+updateCounter();
+
+function confetti() {
+  const colors = ["#ff9500", "#ffb340", "#ffd60a", "#ff453a", "#64d2ff", "#30d158"];
+  for (let i = 0; i < 24; i++) {
+    const p = document.createElement("div");
+    p.className = "confetti";
+    p.style.left = 50 + (Math.random() * 30 - 15) + "vw";
+    p.style.top = "42vh";
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDelay = Math.random() * 0.15 + "s";
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1200);
+  }
+}
+
+btn.addEventListener("click", () => {
+  let i;
+  do { i = Math.floor(Math.random() * compliments.length); } while (i === last && compliments.length > 1);
+  last = i;
+  el.classList.remove("show");
+  setTimeout(() => { el.textContent = compliments[i]; el.classList.add("show"); }, 200);
+  total++;
+  localStorage.setItem("compiment_total", total);
+  updateCounter();
+  if (navigator.vibrate) navigator.vibrate(60);
+  confetti();
+  shareBtn.style.display = "inline-block";
+  current = compliments[i];
+});
+
+let current = "";
+
+shareBtn.addEventListener("click", async () => {
+  const text = current + "\n\n— из приложения «Комплимент для мужика»";
+  if (navigator.share) {
+    try { await navigator.share({ text }); } catch (e) {}
+  } else {
+    try { await navigator.clipboard.writeText(text); shareBtn.textContent = "Скопировано!"; 
+      setTimeout(() => shareBtn.textContent = "Отправить другу", 1500); } catch (e) {}
+  }
+});
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+}
+</script>
+</body>
+</html>
